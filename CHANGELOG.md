@@ -7,17 +7,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### Added
-
-- GitHub Actions CI (`.github/workflows/ci.yml`): PlatformIO firmware build
-  (with placeholder `secrets.h`) and Lambda pytest suite on every push and
-  pull request, with PlatformIO package caching.
-- `aws/lambda/requirements-dev.txt` for local/CI test dependencies.
-- `.gitattributes` normalizing line endings (LF in repo, native on checkout).
-- Firmware: sensor readings now expire after 60 s without a fresh sample —
-  stale values are dropped from the OLED and the MQTT payload instead of
-  being re-published indefinitely after a sensor failure.
-
 ## [0.1.0] - 2026-07-15
 
 ### Added
@@ -37,6 +26,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   least-privilege IoT device / Lambda execution role policy templates.
 - AWS deployment guide (`aws/README.md`) covering DynamoDB, IoT Thing/rule
   setup, and mandatory CloudWatch log retention.
+- GitHub Actions CI (`.github/workflows/ci.yml`): PlatformIO firmware build
+  (with placeholder `secrets.h`) and Lambda pytest suite on every push and
+  pull request, with PlatformIO package caching.
+- Firmware: sensor readings expire after 60 s without a fresh sample — stale
+  values are dropped from the OLED and the MQTT payload instead of being
+  re-published indefinitely after a sensor failure.
+- `.gitattributes` normalizing line endings (LF in repo, native on checkout).
+- MIT license.
 - This changelog.
 
 ### Changed

@@ -117,3 +117,9 @@ Telemetry payload published to `esp32-edge/<THING_NAME>/telemetry`:
 *   **Conventions:** [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) · [Semantic Versioning](https://semver.org/) · [Conventional Commits](https://www.conventionalcommits.org/)
 
 See [CHANGELOG.md](CHANGELOG.md) for release history.
+
+---
+
+## 📄 License
+
+Released under the [MIT License](LICENSE).
