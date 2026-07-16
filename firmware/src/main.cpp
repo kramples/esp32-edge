@@ -51,6 +51,11 @@ constexpr uint32_t INTERVAL_PUBLISH    = 30000;
 constexpr uint32_t INTERVAL_MQTT_RETRY = 5000;
 constexpr uint32_t INTERVAL_WIFI_RETRY = 10000;
 
+// Readings older than this are treated as missing (sensor unplugged/failed),
+// so the OLED falls back to "waiting" and stale metrics are omitted from the
+// MQTT payload rather than being re-published indefinitely.
+constexpr uint32_t SENSOR_STALE_MS = 60000;
+
 // ---------------------------------------------------------------------------
 // Globals
 // ---------------------------------------------------------------------------
@@ -67,9 +72,19 @@ struct Telemetry {
   uint16_t pm1_0        = 0;
   uint16_t pm2_5        = 0;
   uint16_t pm10         = 0;
-  bool     climateValid = false;
-  bool     pmValid      = false;
+  bool     climateValid = false;      // ever had a good DHT11 read
+  bool     pmValid      = false;      // ever had a valid PMS5003 frame
+  uint32_t climateUpdatedMs = 0;      // millis() of last good DHT11 read
+  uint32_t pmUpdatedMs      = 0;      // millis() of last valid PMS5003 frame
 } telemetry;
+
+// Freshness = we have a reading AND it is recent enough to trust.
+bool climateFresh() {
+  return telemetry.climateValid && millis() - telemetry.climateUpdatedMs < SENSOR_STALE_MS;
+}
+bool pmFresh() {
+  return telemetry.pmValid && millis() - telemetry.pmUpdatedMs < SENSOR_STALE_MS;
+}
 
 uint32_t lastDhtRead   = 0;
 uint32_t lastOledDraw  = 0;
@@ -111,10 +126,11 @@ bool poll() {
       pos = 0;
       if (frameValid()) {
         // Words 10..12 = PM1.0 / PM2.5 / PM10 under atmospheric environment
-        telemetry.pm1_0   = word(10);
-        telemetry.pm2_5   = word(12);
-        telemetry.pm10    = word(14);
-        telemetry.pmValid = true;
+        telemetry.pm1_0       = word(10);
+        telemetry.pm2_5       = word(12);
+        telemetry.pm10        = word(14);
+        telemetry.pmValid     = true;
+        telemetry.pmUpdatedMs = millis();
         gotFrame = true;
       }
     }
@@ -167,9 +183,10 @@ void taskReadDht() {
     Serial.println("[dht] read failed, keeping last good values");
     return;
   }
-  telemetry.humidityPct  = h;
-  telemetry.temperatureC = t;
-  telemetry.climateValid = true;
+  telemetry.humidityPct      = h;
+  telemetry.temperatureC     = t;
+  telemetry.climateValid     = true;
+  telemetry.climateUpdatedMs = millis();
 }
 
 void taskDrawOled() {
@@ -182,7 +199,7 @@ void taskDrawOled() {
   display.print("ESP32 Edge Monitor");
 
   display.setCursor(0, 14);
-  if (telemetry.climateValid) {
+  if (climateFresh()) {
     display.printf("Temp: %.1f C", telemetry.temperatureC);
     display.setCursor(0, 26);
     display.printf("Hum : %.1f %%", telemetry.humidityPct);
@@ -191,7 +208,7 @@ void taskDrawOled() {
   }
 
   display.setCursor(0, 40);
-  if (telemetry.pmValid) {
+  if (pmFresh()) {
     display.printf("PM2.5: %u ug/m3", telemetry.pm2_5);
     display.setCursor(0, 50);
     display.printf("PM10 : %u ug/m3", telemetry.pm10);
@@ -208,16 +225,16 @@ void taskDrawOled() {
 
 void taskPublish() {
   if (!mqtt.connected()) return;
-  if (!telemetry.climateValid && !telemetry.pmValid) return;  // nothing to report yet
+  if (!climateFresh() && !pmFresh()) return;  // nothing trustworthy to report
 
   JsonDocument doc;
   doc["deviceId"]  = THING_NAME;
   doc["timestamp"] = (uint32_t)time(nullptr);
-  if (telemetry.climateValid) {
+  if (climateFresh()) {
     doc["temperature_c"] = serialized(String(telemetry.temperatureC, 1));
     doc["humidity_pct"]  = serialized(String(telemetry.humidityPct, 1));
   }
-  if (telemetry.pmValid) {
+  if (pmFresh()) {
     doc["pm1_0"] = telemetry.pm1_0;
     doc["pm2_5"] = telemetry.pm2_5;
     doc["pm10"]  = telemetry.pm10;

@@ -40,7 +40,7 @@ Ensure you have the following components wired before deploying the firmware:
     *   `RX2` ➡️ Pin 16
     *   `TX2` ➡️ Pin 17
 *   **DHT11 Sensor Data:**
-    *   Connect to a free digital input pin (e.g., Pin 4 or similar, configurable in code). Make sure to pull up the data line with a 10kΩ resistor if using a 3-pin bare sensor.
+    *   `DATA` ➡️ Pin 4 (`PIN_DHT` in `firmware/src/main.cpp` — change there if rewired). Make sure to pull up the data line with a 10kΩ resistor if using a 3-pin bare sensor.
 
 ---
 

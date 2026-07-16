@@ -13,6 +13,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   (with placeholder `secrets.h`) and Lambda pytest suite on every push and
   pull request, with PlatformIO package caching.
 - `aws/lambda/requirements-dev.txt` for local/CI test dependencies.
+- `.gitattributes` normalizing line endings (LF in repo, native on checkout).
+- Firmware: sensor readings now expire after 60 s without a fresh sample —
+  stale values are dropped from the OLED and the MQTT payload instead of
+  being re-published indefinitely after a sensor failure.
 
 ## [0.1.0] - 2026-07-15
 
