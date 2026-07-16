@@ -7,3 +7,7 @@ firmware/.vscode/
 
 # Secrets and private certificates (DO NOT UPLOAD)
 firmware/include/secrets.h
+
+# Python bytecode
+__pycache__/
+*.pyc
